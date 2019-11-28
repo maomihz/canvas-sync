@@ -5,6 +5,8 @@ from os.path import join
 import canvasapi
 from canvasapi import Canvas
 
+from .download import DownloadManager
+
 
 class Sync:
     def __init__(self, sync_base=''):
@@ -21,6 +23,8 @@ class Sync:
         self._files_map = dict()
         self._folders_map = dict()
         self._courses_map = dict()
+
+        self.download = DownloadManager(tmp_suffix='canvas-sync')
 
     def add_course(self, course):
         """Add all files from a Course object.
@@ -77,7 +81,14 @@ class Sync:
 
         """
         canvas = Canvas(api_url, api_key)
-        self.add_canvas(canvas, 1)
+        self.add_canvas(canvas)
+
+    # Perform the sync
+    def sync(self):
+        self.download.start()
+        for url, save_to in self.sync_files:
+            self.download.add_task(url, save_to)
+        self.download.stop()
 
     @property
     def sync_files(self):
