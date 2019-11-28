@@ -1,5 +1,5 @@
 """Classes to collect canvas files to sync."""
-import logging
+from canvas_sync import log
 from os.path import join
 
 import canvasapi
@@ -63,8 +63,8 @@ class Sync:
                 self.add_course(course)
                 course_count += 1
             except canvasapi.exceptions.Unauthorized as e:
-                logging.warning('%s error: ', course.name)
-                logging.warning('%s', e)
+                log.warning('%s error: ', course.name)
+                log.warning('%s', e)
 
     def add_api_user(self, api_url, api_key):
         """Add all files from all courses given the api key.
