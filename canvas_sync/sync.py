@@ -86,8 +86,8 @@ class Sync:
     # Perform the sync
     def sync(self):
         self.download.start()
-        for url, save_to in self.sync_files:
-            self.download.add_task(url, save_to)
+        for task in self.sync_files:
+            self.download.add_task(task)
         self.download.stop()
 
     @property
@@ -124,4 +124,7 @@ class Sync:
                 course.name.replace('/', ' '),
                 folder.full_name,
                 file_object.display_name)
-        return url, save_to
+        task = self.download.get_task(
+            url, save_to,
+            mtime=file_object.modified_at_date.timestamp())
+        return task

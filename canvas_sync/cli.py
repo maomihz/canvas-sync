@@ -13,6 +13,6 @@ def main():
         return
     sync = Sync()
     sync.add_api_user(API_URL, API_KEY)
-    for url, save_to in sync.sync_files:
-        print(url, '->', save_to)
+    for task in sync.sync_files:
+        print(task)
     sync.sync()

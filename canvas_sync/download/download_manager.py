@@ -22,19 +22,25 @@ class DownloadManager:
         self.tmp_suffix = tmp_suffix
         self.executor = ThreadPoolExecutor(max_workers=workers)
 
-    def add_task(self, url, save_to=None):
-        """Add a task to the download queue.
+    def get_task(self, url, save_to=None, **kwargs):
+        """Create a task to add the download queue.
 
         Args:
-            url (str): http or https download url.
+            url (str / download.DownloadTask): http or https download url.
             save_to (str): Absolute or relative path to save the file.
 
         """
+        if type(url) is DownloadTask:
+            return url
+
         if save_to is None:
             save_to = url.split('/')[-1]
         save_temp = '{}.{}'.format(save_to, self.tmp_suffix)
+        task = DownloadTask(url, save_to, save_temp, **kwargs)
+        return task
 
-        self.tasks.put(DownloadTask(url, save_to, save_temp))
+    def add_task(self, *args, **kwargs):
+        self.tasks.put(self.get_task(*args, **kwargs))
 
     def start(self):
         """Start all downloads."""
