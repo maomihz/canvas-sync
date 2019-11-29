@@ -27,6 +27,12 @@ class DownloadTask:
         self.save_temp = save_temp
         self.mtime = mtime
 
+        self.rx_bytes = 0
+        self.total_bytes = 0
+
+        self.rx_bytes_history = [0]
+        self.speed = 0
+
     def mkdir(self):
         """Recursively makes directory required by the download task."""
         if self.save_dir:
@@ -89,6 +95,7 @@ class DownloadTask:
         try:
             for chunk in r.iter_content(chunk_size=chunk_size):
                 if chunk:  # filter out keep-alive new chunks
+                    self.rx_bytes += len(chunk)
                     f.write(chunk)
         finally:
             f.close()
@@ -96,6 +103,7 @@ class DownloadTask:
             os.utime(self.save_temp, (self.mtime, self.mtime))
         os.rename(self.save_temp, self.save_to)
         log.debug('download done')
+        return self.rx_bytes
 
     def __str__(self):
         """Describe the download task in a printable format."""
