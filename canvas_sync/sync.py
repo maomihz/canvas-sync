@@ -71,7 +71,7 @@ class Sync:
                 log.warning('%s error: ', course.name)
                 log.warning('%s', e)
 
-    def add_api_user(self, api_url, api_key):
+    def add_api_user(self, api_url, api_key, limit=0):
         """Add all files from all courses given the api key.
 
         The method constructs a canvasapi.Canvas object and call add_canvas().
@@ -82,7 +82,7 @@ class Sync:
 
         """
         canvas = Canvas(api_url, api_key)
-        self.add_canvas(canvas)
+        self.add_canvas(canvas, limit)
 
     # Perform the sync
     def sync(self):
@@ -121,9 +121,10 @@ class Sync:
 
         # Strip path front
         folder_path = folder.full_name.split('/')
-        trim_depth = min(len(folder_path) - 1, self.trim_path_depth)
+        trim_depth = min(len(folder_path), self.trim_path_depth)
 
-        folder_name = join(*folder_path[trim_depth:])
+        if trim_depth:
+            folder_name = join('', *folder_path[trim_depth:])
 
         # save to 'sync_base/course_name/folder_name/file_name'
         save_to = join(
@@ -133,5 +134,6 @@ class Sync:
                 file_object.display_name)
         task = self.download.get_task(
             url, save_to,
-            mtime=file_object.modified_at_date.timestamp())
+            mtime=file_object.modified_at_date.timestamp(),
+            size=file_object.size)
         return task

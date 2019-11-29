@@ -66,7 +66,7 @@ class DownloadManager:
         for i in range(self.workers):
             self.tasks.put(None)
         for future in self.futures:
-            print(future)
+            pass
         self.event_stop.set()
 
     @property
@@ -114,8 +114,6 @@ class DownloadManager:
                 period_loaded = peroid_history[-1] - peroid_history[0]
                 period = (len(peroid_history) - 1) * refresh_interval
                 task.speed = period_loaded / period
-
-            print(self.loaded_bytes, self.speed)
 
     def __str__(self):
         """Returns a list of tasks in printable format."""
