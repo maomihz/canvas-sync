@@ -9,7 +9,7 @@ from .download import DownloadManager
 
 
 class Sync:
-    def __init__(self, sync_base=''):
+    def __init__(self, sync_base='', trim_path_depth=1):
         """Constructor for Sync class.
 
         Args:
@@ -25,6 +25,7 @@ class Sync:
         self._courses_map = dict()
 
         self.download = DownloadManager(tmp_suffix='canvas-sync')
+        self.trim_path_depth = trim_path_depth
 
     def add_course(self, course):
         """Add all files from a Course object.
@@ -118,11 +119,17 @@ class Sync:
         folder = self._folders_map[file_object.folder_id]
         course = self._courses_map[folder.context_id]
 
+        # Strip path front
+        folder_path = folder.full_name.split('/')
+        trim_depth = min(len(folder_path) - 1, self.trim_path_depth)
+
+        folder_name = join(*folder_path[trim_depth:])
+
         # save to 'sync_base/course_name/folder_name/file_name'
         save_to = join(
                 self.sync_base,
                 course.name.replace('/', ' '),
-                folder.full_name,
+                folder_name,
                 file_object.display_name)
         task = self.download.get_task(
             url, save_to,
