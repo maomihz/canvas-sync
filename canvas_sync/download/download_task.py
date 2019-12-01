@@ -9,7 +9,7 @@ from requests import Request, Session, codes
 
 class DownloadTask:
     """A task for download consisting of a local path and a URL."""
-    def __init__(self, url, save_to, save_temp, size=None, mtime=None):
+    def __init__(self, url, save_to, save_temp, size=0, mtime=None):
         """Create a new download task.
 
         Args:

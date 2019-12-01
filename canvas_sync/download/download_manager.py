@@ -58,13 +58,14 @@ class DownloadManager:
 
     def start(self):
         """Start all downloads."""
-        self.executor.submit(self._stat)
+        self.future_stat = self.executor.submit(self._stat)
         self.futures = self.executor.map(self._worker, range(self.workers))
 
     def stop(self):
         """Stop all downloads."""
         for i in range(self.workers):
             self.tasks.put(None)
+        self.future_stat.result()
         for future in self.futures:
             pass
         self.event_stop.set()
@@ -109,6 +110,7 @@ class DownloadManager:
         while not self.event_stop.wait(refresh_interval):
             for task in self.all_tasks:
                 task.update_stat()
+            log.debug('rx %d speed %d', self.loaded_bytes, self.speed)
 
     def __str__(self):
         """Returns a list of tasks in printable format."""
