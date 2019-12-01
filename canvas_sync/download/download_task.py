@@ -48,6 +48,9 @@ class DownloadTask:
 
     def update_stat(self):
         """Update statistics of the file download."""
+        # Do not update if not downloading
+        if not self.active:
+            return
         now = time.time()
         self.rx_bytes_history.append((now, self.rx_bytes))
         self._last_update = now
@@ -61,12 +64,17 @@ class DownloadTask:
         history_len = len(self.rx_bytes_history)
         time0, rx0 = time.time(), self.rx_bytes
 
-        # Search history until time difference >= peroid
+        # If no update for some time
+        if time0 - self._last_update > self.speed_period:
+            return 0
+
+        # Search history until time difference >= period
         for i in reversed(range(history_len)):
             time2, rx2 = self.rx_bytes_history[i]
             dtime = time0 - time2
-            if i == 0 or dtime >= self.speed_period:
-                return (rx0 - rx2) / dtime
+            if dtime >= self.speed_period:
+                break
+        return (rx0 - rx2) / dtime
 
     @property
     def active(self):
