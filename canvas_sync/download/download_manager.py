@@ -72,17 +72,17 @@ class DownloadManager:
     @property
     def loaded_bytes(self):
         """float: Sum of loaded bytes across all tasks."""
-        return sum(map(lambda task: task.rx_bytes, self.all_tasks))
+        return sum(task.rx_bytes for task in self.all_tasks)
 
     @property
     def speed(self):
         """float: Sum of speed across all tasks."""
-        return sum(map(lambda task: task.speed, self.all_tasks))
+        return sum(task.speed for task in self.all_tasks)
 
     @property
     def total_bytes(self):
         """float: Sum of total bytes across all tasks."""
-        return sum(map(lambda task: task.total_bytes, self.all_tasks))
+        return sum(task.total_bytes for task in self.all_tasks)
 
     def _worker(self, worker=0):
         """Function each worker runs.
@@ -100,20 +100,15 @@ class DownloadManager:
             task.do_download()
         log.debug('worker %d exit', worker)
 
-    def _stat(self, refresh_interval=0.1, speed_past_seconds=3.0):
+    def _stat(self, refresh_interval=0.3, speed_past_seconds=3.0):
         """Function a stat thread runs.
 
         Stat thread periodicly gathers download statistics, and calculate
         speeds.
         """
         while not self.event_stop.wait(refresh_interval):
-            period_count = ceil(speed_past_seconds / refresh_interval)
             for task in self.all_tasks:
-                task.rx_bytes_history.append(task.rx_bytes)
-                peroid_history = task.rx_bytes_history[-period_count:]
-                period_loaded = peroid_history[-1] - peroid_history[0]
-                period = (len(peroid_history) - 1) * refresh_interval
-                task.speed = period_loaded / period
+                task.update_stat()
 
     def __str__(self):
         """Returns a list of tasks in printable format."""

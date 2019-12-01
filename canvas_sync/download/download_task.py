@@ -2,6 +2,7 @@ from canvas_sync import log
 
 from os.path import dirname
 import os
+import time
 
 from requests import Request, Session, codes
 
@@ -27,11 +28,16 @@ class DownloadTask:
         self.save_temp = save_temp
         self.mtime = mtime
 
+        # Received bytes vs. total bytes of the file.
         self.rx_bytes = 0
-        self.total_bytes = 0
+        self.total_bytes = size
 
-        self.rx_bytes_history = [0]
-        self.speed = 0
+        # History of received bytes, used to calculate speed (bytes / second).
+        self.rx_bytes_history = []
+        self.speed_period = 3
+
+        self._last_update = 0
+        self._state_receiving = False
 
     def mkdir(self):
         """Recursively makes directory required by the download task."""
@@ -39,6 +45,33 @@ class DownloadTask:
             os.makedirs(self.save_dir, exist_ok=True)
         if self.save_dir_temp:
             os.makedirs(self.save_dir, exist_ok=True)
+
+    def update_stat(self):
+        """Update statistics of the file download."""
+        now = time.time()
+        self.rx_bytes_history.append((now, self.rx_bytes))
+        self._last_update = now
+
+    @property
+    def speed(self):
+        """Return calculated speed of the download task."""
+        # No bytes difference to calculate
+        if len(self.rx_bytes_history) <= 0:
+            return 0
+        history_len = len(self.rx_bytes_history)
+        time0, rx0 = time.time(), self.rx_bytes
+
+        # Search history until time difference >= peroid
+        for i in reversed(range(history_len)):
+            time2, rx2 = self.rx_bytes_history[i]
+            dtime = time0 - time2
+            if i == 0 or dtime >= self.speed_period:
+                return (rx0 - rx2) / dtime
+
+    @property
+    def active(self):
+        """bool: Whether the task state is active / downloading."""
+        return self._state_receiving
 
     @property
     def save_dir(self):
@@ -92,6 +125,7 @@ class DownloadTask:
             f = open(self.save_temp, 'wb')
 
         # Receive content and write to files
+        self._state_receiving = True
         try:
             for chunk in r.iter_content(chunk_size=chunk_size):
                 if chunk:  # filter out keep-alive new chunks
@@ -99,6 +133,7 @@ class DownloadTask:
                     f.write(chunk)
         finally:
             f.close()
+            self._state_receiving = False
         if self.mtime is not None:
             os.utime(self.save_temp, (self.mtime, self.mtime))
         os.rename(self.save_temp, self.save_to)
