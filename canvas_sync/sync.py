@@ -63,6 +63,9 @@ class Sync:
         for course in courses:
             if limit > 0 and course_count >= limit:
                 break
+            # If a course does not even have a name
+            if not hasattr(course, 'name'):
+                continue
             # If a course is unauthorized, then skip
             try:
                 self.add_course(course)
